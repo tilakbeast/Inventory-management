@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Stock</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      input[type="submit"] {
+        width: 100%;
+        padding: 10px;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      input[type="submit"]:hover {
+        background-color: #45a049;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        fetch("/fetch-inventory")
+          .then((response) => response.json())
+          .then((data) => {
+            updateInventoryList(data);
+            updateQuantityGraph(data);
+          })
+          .catch((error) => console.error("Error fetching inventory:", error));
+
+        function updateInventoryList(inventory) {
+          const inventoryList = document.getElementById("inventory-list");
+          inventoryList.innerHTML = ""; // Clear existing items
+
+          inventory.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = `${item.name}: ${item.quantity}`;
+            inventoryList.appendChild(li);
+          });
+        }
+
+        function updateQuantityGraph(inventory) {
+          const labels = inventory.map((item) => item.name);
+          const quantities = inventory.map((item) => item.quantity);
+
+          const ctx = document
+            .getElementById("quantity-chart")
+            .getContext("2d");
+          new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Quantity",
+                  data: quantities,
+                  backgroundColor: "rgba(54, 162, 235, 0.5)",
+                  borderColor: "rgba(54, 162, 235, 1)",
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              scales: {
+                yAxes: [
+                  {
+                    ticks: {
+                      beginAtZero: true,
+                    },
+                  },
+                ],
+              },
+            },
+          });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Update Stock</h1>
+      <form action="/update-stock" method="post">
+        <label for="item-id">Item name:</label>
+        <input
+          type="text"
+          id="item-id"
+          name="item-id"
+          placeholder="Enter item name"
+        />
+        <label for="new-stock-level">New Quantity:</label>
+        <input
+          type="number"
+          id="new-stock-level"
+          name="new-stock-level"
+          placeholder="Enter new quantity"
+        />
+        <input type="submit" value="Update Stock" />
+      </form>
+    </div>
+    <div class="inventory">
+      <h2>Current Inventory Items</h2>
+      <ul id="inventory-list">
+        <!-- Inventory items will be dynamically added here -->
+      </ul>
+    </div>
+    <div class="chart-container">
+      <h2>Quantity Graph</h2>
+      <canvas id="quantity-chart"></canvas>
+    </div>
+  </body>
+</html>

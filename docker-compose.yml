@@ -1,0 +1,84 @@
+version: '3.8'
+
+networks:
+  rabbitmq-network:
+    driver: bridge
+
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - rabbitmq-network
+    healthcheck:
+    # test: rabbitmq-diagnostics -q ping
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  producer:
+    build: ./producer
+    ports:
+      - "8001:8001"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+    networks:
+      - rabbitmq-network
+
+  health_check_consumer:
+    build: ./consumer_one
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+    networks:
+      - rabbitmq-network
+
+  item_creation_consumer:
+    build: ./consumer_two
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+    networks:
+      - rabbitmq-network
+
+  stock_management_consumer:
+    build: ./consumer_three
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+    networks:
+      - rabbitmq-network
+
+  order_processing_consumer:
+    build: ./consumer_four
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+    networks:
+      - rabbitmq-network
+
+  database:
+    build: ./database
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - rabbitmq-network
+
+volumes:
+  mongodb_data:
+    external: true
+
+
+
+
